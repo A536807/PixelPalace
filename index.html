@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sell Your Pixels</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            text-align: center;
+            overflow-x: hidden;
+        }
+
+        #header {
+            background-color: #333;
+            color: white;
+            padding: 15px;
+        }
+
+        #description {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        #pixel-grid-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap; 
+            width: 100%;
+            max-width: 1000px; 
+            margin: 20px auto;
+            overflow-x: hidden; 
+        }
+
+        .pixel {
+            width: 20px;
+            height: 20px;
+            background-color: #ccc;
+            border: 1px solid #fff;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        .pixel.taken {
+            background-color: #ff9900;
+        }
+
+        #footer {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            margin-top: 20px;
+        }
+
+        .info {
+            color: #555;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <h1>Sell Your Pixels</h1>
+        <p>Get a pixel, display your logo or message here!</p>
+    </div>
+
+    <div id="description">
+        <p>Each pixel is Free of cost. Click on an available pixel to buy it and upload your image or text.</p>
+    </div>
+
+    <div id="pixel-grid-container"></div>
+
+    <div id="footer">
+        <p class="info">Total Pixels Available: <span id="availablePixels">10000</span></p>
+        <p class="info">Price per pixel: Free</p>
+    </div>
+
+    <script>
+        const totalPixels = 10000; 
+        let availablePixels = totalPixels;
+
+        const gridContainer = document.getElementById("pixel-grid-container");
+        const availablePixelsCounter = document.getElementById("availablePixels");
+
+        
+        const pixelData = JSON.parse(localStorage.getItem('pixelData')) || [];
+
+       
+        function createGrid() {
+            gridContainer.innerHTML = ''; 
+            for (let i = 0; i < totalPixels; i++) {
+                const pixelDiv = document.createElement("div");
+                pixelDiv.classList.add("pixel");
+                pixelDiv.setAttribute("data-id", i);
+                gridContainer.appendChild(pixelDiv);
+
+                
+                const storedPixel = pixelData.find(pixel => pixel.id === i);
+                if (storedPixel) {
+                    pixelDiv.classList.add("taken");
+                    if (storedPixel.type === "image") {
+                        const image = document.createElement("img");
+                        image.src = storedPixel.content;
+                        image.style.width = "20px";
+                        image.style.height = "20px";
+                        pixelDiv.innerHTML = ""; 
+                        pixelDiv.appendChild(image);
+                    } else {
+                        pixelDiv.innerHTML = storedPixel.content; 
+                        pixelDiv.style.textAlign = "center";
+                        pixelDiv.style.fontSize = "10px";
+                    }
+                }
+
+                pixelDiv.addEventListener("click", function () {
+                    if (!pixelDiv.classList.contains("taken")) {
+                        if (confirm("Are you sure you want to get this pixel?")) {
+                            pixelDiv.classList.add("taken");
+                            availablePixels--;
+                            availablePixelsCounter.textContent = availablePixels;
+
+                            const content = prompt("Enter a URL for an image or text to display on this pixel:");
+                            if (content) {
+                                const isImage = content.startsWith("http");
+                                const pixelInfo = {
+                                    id: i,
+                                    type: isImage ? "image" : "text",
+                                    content: content
+                                };
+                                pixelData.push(pixelInfo);
+                                localStorage.setItem('pixelData', JSON.stringify(pixelData));
+
+                                if (isImage) {
+                                    const image = document.createElement("img");
+                                    image.src = content;
+                                    image.style.width = "20px";
+                                    image.style.height = "20px";
+                                    pixelDiv.innerHTML = "";
+                                    pixelDiv.appendChild(image);
+                                } else {
+                                    pixelDiv.innerHTML = content; 
+                                    pixelDiv.style.textAlign = "center";
+                                    pixelDiv.style.fontSize = "10px";
+                                }
+                            }
+                        }
+                    } else {
+                        if (confirm("Do you want to remove the image/text from this pixel?")) {
+                            pixelDiv.innerHTML = ""; 
+                            pixelDiv.classList.remove("taken");
+
+                            const index = pixelData.findIndex(pixel => pixel.id === i);
+                            if (index !== -1) {
+                                pixelData.splice(index, 1);
+                                localStorage.setItem('pixelData', JSON.stringify(pixelData));
+                            }
+
+                            availablePixels++;
+                            availablePixelsCounter.textContent = availablePixels;
+                        }
+                    }
+                });
+            }
+        }
+
+        createGrid();
+    </script>
+
+</body>
+</html>
